@@ -1,41 +1,47 @@
 class Luhn
   def initialize(str)
-    @str = str.delete("\s")
+    @str = str
   end
 
   def self.valid?(str)
-    new(str).perform
+    new(str).valid_number?
   end
 
-  def perform
-    return false if invalid_string_format?
+  def valid_number?
+    return false if invalid_format?
 
-    (checksum % 10).zero?
+    (digits_sum % 10).zero?
   end
 
   private
 
   attr_reader :str
 
-  def invalid_string_format?
-    str.size <= 1 || str.match?(/[^0-9]/)
+  def cleaned_str
+    @cleaned_str ||= str.delete("\s")
+  end
+
+  def invalid_format?
+    cleaned_str.size <= 1 || cleaned_str.match?(/[^0-9]/)
   end
 
   def digits
-    str.scan(/\d/).map(&:to_i)
+    cleaned_str
+      .scan(/\d/)
+      .join
+      .yield_self(&:to_i)
+      .digits
   end
 
-  def checksum
+  def digits_sum
     digits
-      .reverse
       .each_slice(2)
-      .sum { |pair| calculate_pair_sum(pair) }
+      .sum { |(first, second)| calculate_sum(first, second) }
   end
 
-  def calculate_pair_sum(pair)
-    first, second = pair
+  def calculate_sum(first, second)
     second = second.to_i * 2
-    second -= 9 if second > 9
+    second -= 9 unless second < 10
 
     first + second
   end
